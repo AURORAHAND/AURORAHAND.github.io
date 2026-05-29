@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="google-site-verification" content="fLaM7cZbWUf32rmxe8fsIO73JmjnEYlr1zv-h9tbk_Q" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="title" content="AURORA: Active Uncertainty-Driven Re-Orientation for In-Hand Reconstruction">
+  <meta name="description" content="BRIEF_DESCRIPTION_OF_YOUR_RESEARCH_CONTRIBUTION_AND_FINDINGS">
+  <meta name="author" content="Anonymous_Authors">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+  <meta name="theme-color" content="#2563eb">
+
+  <title>AURORA: Active Uncertainty-Driven Re-Orientation for In-Hand Reconstruction</title>
+
+  <link rel="icon" type="image/x-icon" href="static/images/reconstruction.png">
+  <link rel="apple-touch-icon" href="static/images/reconstruction.png">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <link rel="preload" href="static/css/bulma-carousel.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/bulma-slider.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
+  <noscript>
+    <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+    <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  </noscript>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/bulma-carousel.min.js"></script>
+  <script defer src="static/js/bulma-slider.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)'], ['$', '$']],
+        displayMath: [['\\[', '\\]'], ['$$', '$$']]
+      }
+    };
+  </script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <!-- =========================
+       Styles (unified + fixed overflow)
+       ========================= -->
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#4b5563;
+      --border: rgba(0,0,0,.10);
+      --shadow: 0 10px 28px rgba(0,0,0,.08);
+      --radius: 18px;
+      --gap: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+
+    /* Wrapper blocks */
+    .expBlock, .discBlock{
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 28px 22px 22px;
+      color: var(--text);
+      font-family: var(--sans);
+    }
+    .expBlock h2, .discBlock h2{ margin:0 0 6px; font-size: 26px; }
+    .expBlock .subtitle, .discBlock .subtitle{
+      margin:0 0 16px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.55;
+      max-width: 980px;
+    }
+
+    /* Pills */
+    .pillrow{ display:flex; gap:10px; flex-wrap:wrap; margin: 12px 0 18px; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.03);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .pill b{ color: var(--text); font-weight: 800; }
+
+    /* Cards */
+    .card{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;              /* IMPORTANT: clip everything */
+      position: relative;
+      min-height: 260px;
+    }
+    .cardHeader, .cardHead, .discHead{
+      display:flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 12px 14px 8px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      background: rgba(0,0,0,.02);
+    }
+    .objname{ font-weight: 800; font-size: 14px; color: var(--text); }
+    .title{ font-weight: 900; font-size: 14px; color: var(--text); }
+    .tag{ font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+    /* Media */
+    .media{
+      height: 240px;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+      background:#fff;
+      overflow:hidden;              /* IMPORTANT */
+      position: relative;
+    }
+    .media img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+      display:block;
+      background:#fff;
+    }
+
+    /* Viewer */
+    .viewer{
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background:#fff;
+      overflow:hidden;              /* IMPORTANT */
+    }
+    .viewer canvas{
+      position:absolute;            /* IMPORTANT: keeps it inside */
+      inset:0;
+      width:100% !important;
+      height:100% !important;
+      display:block;
+    }
+
+    .overlay{
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      color: var(--muted);
+      font-size: 13px;
+      pointer-events:none;
+      background: rgba(255,255,255,.75);
+      z-index:3;
+    }
+    .controlsBar{
+      position:absolute;
+      left: 10px;
+      bottom: 10px;
+      display:flex;
+      gap:8px;
+      z-index: 4;
+    }
+    .btn{
+      appearance:none;
+      border: 1px solid rgba(0,0,0,.14);
+      background: rgba(255,255,255,.90);
+      color: var(--text);
+      padding: 7px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      cursor:pointer;
+    }
+    .btn:hover{ border-color: rgba(37,99,235,.35); }
+    .hint{
+      position:absolute;
+      right: 10px;
+      bottom: 12px;
+      color: rgba(17,24,39,.75);
+      font-size: 12px;
+      background: rgba(255,255,255,.85);
+      border: 1px solid rgba(0,0,0,.12);
+      padding: 6px 10px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+      pointer-events:none;
+      z-index: 4;
+    }
+
+    /* Normal legend — compact + collapsible */
+    .normalLegend{
+      position:absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 5;
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(0,0,0,.12);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: #111;
+      backdrop-filter: blur(6px);
+      pointer-events:auto;          /* allow click */
+      max-width: 160px;
+    }
+    .nl-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      user-select:none;
+      font-weight: 900;
+    }
+    .nl-head span{
+      font-family: var(--mono);
+      font-weight: 800;
+      font-size: 11px;
+      color:#374151;
+      opacity:.8;
+    }
+    .nl-body{ margin-top:8px; display:none; }
+    .normalLegend.open .nl-body{ display:block; }
+
+    .nl-row{ display:flex; align-items:center; gap:8px; margin-top: 6px; }
+    .nl-bar{
+      flex:1;
+      height: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,.15);
+    }
+    .nl-lbl{
+      width: 14px;
+      font-family: var(--mono);
+      font-weight: 900;
+      font-size: 11px;
+    }
+    .nl-minmax{
+      display:flex;
+      justify-content: space-between;
+      color:#374151;
+      font-family: var(--mono);
+      font-size: 10px;
+      margin-top: 6px;
+      opacity:.9;
+    }
+
+    /* Tables */
+    .tableWrap{
+      margin-top: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .tableTitle{
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+    table{ width:100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      text-align: right;
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child{ text-align: left; }
+    thead th{
+      color: var(--muted);
+      font-weight: 900;
+      background: rgba(0,0,0,.03);
+    }
+    tbody tr:hover{ background: rgba(37,99,235,.05); }
+    .bold{ font-weight: 900; color: var(--text); }
+
+    .foot{
+      margin-top: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+      max-width: 980px;
+    }
+
+    /* Exp1 grid */
+    .qual-grid{
+      display:grid;
+      grid-template-columns: 1.1fr 1fr 1fr;
+      gap: var(--gap);
+      margin-top: 10px;
+    }
+    .colhead{
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(8px);
+      padding: 10px 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    /* Exp2 figure + 2×3 grid */
+    .exp2 figure, .disc-fig{
+      margin:0;
+      border:1px solid rgba(0,0,0,.10);
+      border-radius: 16px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .exp2 figure img, .disc-fig img{
+      width:100%;
+      height:auto;
+      display:block;
+      object-fit: contain;
+      background:#fff;
+    }
+    .exp2 figcaption, .disc-fig figcaption{
+      padding: 10px 12px;
+      font-size: 13px;
+      color:#4b5563;
+      border-top: 1px solid rgba(0,0,0,.08);
+    }
+
+    .meshgrid-2x3, .discGrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:14px;
+      margin-top: 14px;
+    }
+    .exp2 .media{ height: 260px; }
+    .exp2 .viewer{ height: 100%; }     /* viewer fills media */
+
+    .discMedia{ height: 280px; display:flex; align-items:stretch; overflow:hidden; }
+    .discMedia.imgOnly img{ width:100%; height:100%; object-fit: contain; }
+
+    @media (max-width: 980px){
+      .qual-grid, .qual-grid-4col{ grid-template-columns: 1fr; }
+      .colhead{ display:none; }
+      .media{ height: 260px; }
+      .meshgrid-2x3, .discGrid{ grid-template-columns: 1fr; }
+      .exp2 .media{ height: 300px; }
+      .discMedia{ height: 300px; }
+    }
+
+    .videoCard{
+      margin: 14px 0 18px;
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.7);
+    }
+
+    .videoTitle{
+      margin-bottom: 10px;
+      font-size: 0.98rem;
+    }
+
+    .videoWrap{
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #000;
+    }
+
+    .demoVideo{
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .videoNote{
+      margin-top: 8px;
+      font-size: 0.92rem;
+      opacity: 0.85;
+    }
+
+    /* Temporal Sliders Styling */
+    .time-slider-wrap {
+      background: rgba(0,0,0,.01);
+      border-top: 1px solid rgba(0,0,0,.05);
+    }
+    .mesh-time-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,.08);
+      outline: none;
+    }
+    .mesh-time-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--theme-color, #2563eb);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      border: none;
+      transition: transform 0.1s ease;
+    }
+    .mesh-time-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+    .mesh-time-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--theme-color, #2563eb);
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      border: none;
+      transition: transform 0.1s ease;
+    }
+    .mesh-time-slider::-moz-range-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .qual-grid-4col {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 1fr 1fr; 
+      gap: var(--gap);
+      margin-top: 10px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <main id="main-content">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <h1 class="title is-3 publication-title">AURORA: Active Uncertainty-Driven Re-Orientation for In-Hand Reconstruction</h1>
+              <div class="is-size-5 publication-authors">
+                <span class="author-block"><a href="#" target="_blank">Anonymous Authors</a></span>
+              </div>
+
+              <div class="publication-links" style="margin-top: 12px;">
+                <span class="link-block">
+                  <a href="https://aurora-ano.github.io/" target="_blank"
+                     class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-github"></i></span>
+                    <span>Code (Coming soon)</span>
+                  </a>
+                </span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Teaser -->
+    <section class="hero teaser">
+      <div class="container is-max-desktop">
+        <div class="hero-body">
+          <img src="static/images/teaser.png" alt="teaser" loading="lazy">
+          <h2 class="subtitle has-text-centered">
+            AURORA actively reorients an object based on uncertainty-driven next-best-view planning to expose unobserved regions,
+            enabling incremental observation and 3D reconstruction from a fixed RGB-D camera.
+          </h2>
+        </div>
+      </div>
+    </section>
+
+    <!-- Abstract -->
+    <section class="section hero is-light">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Abstract</h2>
+            <div class="content has-text-justified">
+              <p>
+                Observing objects grasped by a robot hand is challenging due to severe visual occlusions. 
+                The manipulator itself obscures large portions of the object, while a fixed camera provides 
+                viewpoint-constrained observations. Although these hidden surfaces can be exposed by in-hand 
+                manipulation, most existing approaches rely on predefined or open-loop reorientation strategies 
+                that do not explicitly target unobserved regions.To address this limitation, we propose AURORA, 
+                an active 3D reconstruction framework that leverages in-hand manipulation for object inspection. 
+                At the core of AURORA is Ray-GPIS, a novel informative planner that estimates reconstruction uncertainty 
+                along candidate viewing rays. By identifying directions that maximize uncertainty-novelty score, Ray-GPIS 
+                generates next-best-view targets, which are executed via an axis-conditioned in-hand rotation policy.
+                The resulting visual observations are integrated through a visual fusion pipeline for incremental 3D reconstruction. 
+                Extensive real-world experiments on objects with diverse geometries demonstrate that AURORA outperforms baselines, 
+                achieving higher surface completeness and faster reconstruction.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pipeline -->
+    <section class="hero is-small is-light">
+      <div class="hero-body">
+        <div class="container has-text-centered">
+          <h2 class="title is-3">Pipeline</h2>
+          <p class="content is-size-5" style="margin-bottom: 1.5em;">
+            Overview of the proposed technical pipeline. The system integrates four modules:
+            (a) in-hand object reorientation with the Leap Hand; (b) 6D pose tracking via BundleTrack;
+            (c-d) reconstruction; (e) uncertainty-driven next-best-view planning.
+          </p>
+          <figure style="display:inline-block; max-width: 95%;">
+            <img src="static/images/pipeline.png" alt="Pipeline overview" loading="lazy" style="width:100%; height:auto;">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         Experiment I + II + III
+         ========================= -->
+    <section class="section" id="experiments">
+      <div class="container is-max-desktop">
+
+        <!-- Exp1 -->
+        <div class="expBlock exp1" id="exp1">
+          <h2>Experiment I — Reconstruction Quality</h2>
+          <p class="subtitle">
+            We evaluate reconstruction performance on six graspable real-world objects under a fixed manipulation budget of
+            <span class="bold">30&nbsp;s</span>. For each object, we show the qualitative results (RGB, online point cloud, offline refined mesh),
+            followed by quantitative F-scores.
+          </p>
+
+          <div class="pillrow">
+            <div class="pill">Budget: <b>30 s</b></div>
+            <div class="pill">Online: <b>PCD–PCD</b></div>
+            <div class="pill">Offline: <b>Mesh–Mesh</b></div>
+            <div class="pill">Metric: <b>F@τ</b> (harmonic mean of precision & recall)</div>
+<!--            <div class="pill">Interaction: <b>drag / scroll</b> to orbit & zoom</div>-->
+          </div>
+
+          <div class="videoCard">
+          <div class="videoTitle">
+            <b>Real-Robot Demo.</b> In-hand rotation on <span class="bold">Cube</span> (30s).
+          </div>
+
+          <div class="videoWrap">
+            <video class="demoVideo"
+                   controls
+                   playsinline
+                   preload="metadata"
+                   poster="static/videos/cube.jpg">
+              <source src="static/videos/cube.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          <div class="videoNote">
+            We show the real-world in-hand rotation used in Experiment I for data capture.
+          </div>
+        </div>
+
+          <div class="qual-grid" id="qualGrid">
+            <div class="colhead">Object</div>
+            <div class="colhead">Point Cloud</div>
+            <div class="colhead">Mesh (Normal Colormap)</div>
+            <!-- rows injected by JS -->
+          </div>
+
+          <div class="tableWrap">
+            <div class="tableTitle">
+              <b>Table.</b> Quantitative results after a fixed <span class="bold">30 s</span> budget.
+              We report F-scores <span class="bold">\(F@\tau\)</span> (higher is better), where F@τ is the harmonic mean of precision and recall within tolerance τ.
+            </div>
+
+            <div style="overflow:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2">Obj.</th>
+                    <th colspan="3">PCD–PCD (Online)</th>
+                    <th colspan="3">Mesh–Mesh (Offline)</th>
+                  </tr>
+                  <tr>
+                    <th>F@2 ↑</th><th class="bold">F@5 ↑</th><th>F@10 ↑</th>
+                    <th>F@2 ↑</th><th class="bold">F@5 ↑</th><th>F@10 ↑</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Cube</td><td>0.2895</td><td class="bold">0.9337</td><td>0.9977</td><td>0.6481</td><td class="bold">0.9557</td><td>0.9957</td></tr>
+                  <tr><td>Corner Block</td><td>0.2353</td><td class="bold">0.7354</td><td>0.9303</td><td>0.5298</td><td class="bold">0.8559</td><td>0.9488</td></tr>
+                  <tr><td>L-shaped Block</td><td>0.2306</td><td class="bold">0.8366</td><td>0.9886</td><td>0.4674</td><td class="bold">0.8367</td><td>0.9450</td></tr>
+                  <tr><td>Pepper</td><td>0.1770</td><td class="bold">0.8321</td><td>0.9773</td><td>0.5480</td><td class="bold">0.8890</td><td>0.9913</td></tr>
+                  <tr><td>Cylinder</td><td>0.4428</td><td class="bold">0.8400</td><td>0.9425</td><td>0.4035</td><td class="bold">0.8320</td><td>0.9372</td></tr>
+                  <tr><td>Cross Block</td><td>0.1454</td><td class="bold">0.7718</td><td>0.9664</td><td>0.4601</td><td class="bold">0.8050</td><td>0.9850</td></tr>
+                  <tr><td class="bold">Mean</td><td>0.2534</td><td class="bold">0.8249</td><td>0.9671</td><td>0.5095</td><td class="bold">0.8624</td><td>0.9672</td></tr>
+                  <tr><td class="bold">Std.</td><td>0.1054</td><td class="bold">0.0679</td><td>0.0263</td><td>0.0855</td><td class="bold">0.0535</td><td>0.0262</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p class="foot">
+            <b>Summary.</b> Under a fixed <span class="bold">30 s</span> manipulation budget, our framework delivers strong online reconstructions
+            with an average <span class="bold">F@10 = 0.9671 ± 0.0263</span> and <span class="bold">F@5 = 0.8249 ± 0.0679</span>.
+            The offline refinement stage further improves geometric consistency and reduces residual artifacts, achieving
+            <span class="bold">F@10 = 0.9672 ± 0.0262</span> and <span class="bold">F@5 = 0.8624 ± 0.0535</span>.
+            Remaining errors are primarily caused by sensing noise and small pose misalignments due to tracking inaccuracies.
+          </p>
+        </div>
+
+        <!-- Exp2 -->
+        <div class="expBlock exp2" id="exp2" style="margin-top:18px;">
+          <h2>Experiment II — Efficiency vs Non-active Baselines</h2>
+          <p class="subtitle">
+            We compare five rotation strategies using the temporal evolution of the uncertainty tail \(q_{95}\) and Mesh--Mesh F-score at the 5mm threshold:
+            <b>ours</b>, a fixed schedule \(z\!\rightarrow\!x\!\rightarrow\!y\!\rightarrow\!z\!\rightarrow\!x\), and single-axis baselines (\(x\)-only/\(y\)-only/\(z\)-only).
+            Below, we show the offline refined meshes for all five strategies (normal colormap).
+          </p>
+
+          <figure>
+            <img src="static/images/combined_single_plot.png" alt="q95 uncertainty curves" loading="lazy">
+            <figcaption>
+              Online reconstruction efficiency under different rotation strategies, averaged over six objects. The curves show the <b>\(q_{95}\) uncertainty</b> and <b>\(F@5\)</b> threshold within a \(30\,\mathrm{s}\) budget.
+            </figcaption>
+          </figure>
+
+          <div class="tableWrap">
+            <div class="tableTitle">
+              <b>Table.</b> Comparison with non-active baselines and state-of-the-art open-loop methods. We report F-scores <b>\(F@\tau\)</b> (higher is better) for Mean PCD–PCD and Mean Mesh–Mesh.
+            </div>
+            <div style="overflow:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2">Baseline</th>
+                    <th colspan="3">Mean PCD–PCD</th>
+                    <th colspan="3">Mean Mesh–Mesh</th>
+                  </tr>
+                  <tr>
+                    <th>\(F@2\ \uparrow\)</th>
+                    <th>\(F@5\ \uparrow\)</th>
+                    <th>\(F@10\ \uparrow\)</th>
+                    <th>\(F@2\ \uparrow\)</th>
+                    <th>\(F@5\ \uparrow\)</th>
+                    <th>\(F@10\ \uparrow\)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>\(x\)-axis</td>
+                    <td>0.1735</td>
+                    <td>0.6625</td>
+                    <td>0.8655</td>
+                    <td>0.3595</td>
+                    <td>0.6211</td>
+                    <td>0.8440</td>
+                  </tr>
+                  <tr>
+                    <td>\(y\)-axis</td>
+                    <td>0.1463</td>
+                    <td>0.6074</td>
+                    <td>0.7933</td>
+                    <td>0.3082</td>
+                    <td>0.5643</td>
+                    <td>0.7498</td>
+                  </tr>
+                  <tr>
+                    <td>\(z\)-axis</td>
+                    <td>0.2079</td>
+                    <td>0.7786</td>
+                    <td>0.9228</td>
+                    <td>0.4414</td>
+                    <td>0.7231</td>
+                    <td>0.8872</td>
+                  </tr>
+                  <tr>
+                    <td>Fixed schedule</td>
+                    <td>0.1550</td>
+                    <td>0.7015</td>
+                    <td>0.8995</td>
+                    <td>0.4544</td>
+                    <td>0.6948</td>
+                    <td>0.8904</td>
+                  </tr>
+                  <!-- <tr style="border-top: 1.5px solid var(--border);">
+                    <td>TRELLIS.2</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>0.6538</td>
+                    <td>0.8315</td>
+                    <td>0.9017</td>
+                  </tr>
+                  <tr>
+                    <td>SPAR3D</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>--</td>
+                    <td>0.5571</td>
+                    <td>0.7386</td>
+                    <td>0.9483</td>
+                  </tr> -->
+                  <tr style="border-top: 1.5px solid var(--border);" class="bold">
+                    <td>Ours (Active)</td>
+                    <td>0.2534</td>
+                    <td>0.8249</td>
+                    <td>0.9671</td>
+                    <td>0.5095</td>
+                    <td>0.8624</td>
+                    <td>0.9672</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2×3 grid -->
+          <div class="meshgrid-2x3">
+            <!-- (1,1) RGB -->
+            <div class="card">
+              <div class="cardHead">
+                <div class="title">Pepper (RGB)</div>
+                <div class="tag">Captured view</div>
+              </div>
+              <div class="media">
+                <img src="assets/ablation/cross_rgb.png" alt="pepper rgb" loading="lazy">
+              </div>
+            </div>
+
+            <!-- (1,2) ours -->
+            <div class="card" style="height: auto; min-height: unset; padding-bottom: 8px;">
+              <div class="cardHead">
+                <div class="title">Ours (Closed-loop)</div>
+                <div class="tag">Offline Mesh</div>
+              </div>
+              <div class="media">
+                <div class="viewer" data-kind="ply-mesh" data-src-pattern="assets/mesh/temporal/cross/{time}s.ply" data-normal="1">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="normalLegend"></div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+              <div class="time-slider-wrap" style="padding: 10px 14px 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 800; color: var(--muted); font-family: var(--mono);">Reconstruction Step:</span>
+                  <span class="slider-val-label" style="font-size: 11px; font-weight: 900; color: var(--text); font-family: var(--mono);">30s</span>
+                </div>
+                <input type="range" class="mesh-time-slider" min="6" max="30" step="6" value="30" style="width: 100%; cursor: pointer;">
+              </div>
+            </div>
+
+            <!-- (1,3) fixed zxyzx -->
+            <div class="card" style="height: auto; min-height: unset; padding-bottom: 8px;">
+              <div class="cardHead">
+                <div class="title">Fixed (z→x→y→z→x)</div>
+                <div class="tag">Offline Mesh</div>
+              </div>
+              <div class="media">
+                <div class="viewer" data-kind="ply-mesh" data-src-pattern="assets/mesh/temporal/xyz/{time}s.ply" data-normal="1">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="normalLegend"></div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+              <div class="time-slider-wrap" style="padding: 10px 14px 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 800; color: var(--muted); font-family: var(--mono);">Reconstruction Step:</span>
+                  <span class="slider-val-label" style="font-size: 11px; font-weight: 900; color: var(--text); font-family: var(--mono);">30s</span>
+                </div>
+                <input type="range" class="mesh-time-slider" min="6" max="30" step="6" value="30" style="width: 100%; cursor: pointer;">
+              </div>
+            </div>
+
+            <!-- (2,1) x-only -->
+            <div class="card" style="height: auto; min-height: unset; padding-bottom: 8px;">
+              <div class="cardHead">
+                <div class="title">x-only</div>
+                <div class="tag">Offline Mesh</div>
+              </div>
+              <div class="media">
+                <div class="viewer" data-kind="ply-mesh" data-src-pattern="assets/mesh/temporal/x/{time}s.ply" data-normal="1">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="normalLegend"></div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+              <div class="time-slider-wrap" style="padding: 10px 14px 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 800; color: var(--muted); font-family: var(--mono);">Reconstruction Step:</span>
+                  <span class="slider-val-label" style="font-size: 11px; font-weight: 900; color: var(--text); font-family: var(--mono);">30s</span>
+                </div>
+                <input type="range" class="mesh-time-slider" min="6" max="30" step="6" value="30" style="width: 100%; cursor: pointer;">
+              </div>
+            </div>
+
+            <!-- (2,2) y-only -->
+            <div class="card" style="height: auto; min-height: unset; padding-bottom: 8px;">
+              <div class="cardHead">
+                <div class="title">y-only</div>
+                <div class="tag">Offline Mesh</div>
+              </div>
+              <div class="media">
+                <div class="viewer" data-kind="ply-mesh" data-src-pattern="assets/mesh/temporal/y/{time}s.ply" data-normal="1">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="normalLegend"></div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+              <div class="time-slider-wrap" style="padding: 10px 14px 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 800; color: var(--muted); font-family: var(--mono);">Reconstruction Step:</span>
+                  <span class="slider-val-label" style="font-size: 11px; font-weight: 900; color: var(--text); font-family: var(--mono);">30s</span>
+                </div>
+                <input type="range" class="mesh-time-slider" min="6" max="30" step="6" value="30" style="width: 100%; cursor: pointer;">
+              </div>
+            </div>
+
+            <!-- (2,3) z-only -->
+            <div class="card" style="height: auto; min-height: unset; padding-bottom: 8px;">
+              <div class="cardHead">
+                <div class="title">z-only</div>
+                <div class="tag">Offline Mesh</div>
+              </div>
+              <div class="media">
+                <div class="viewer" data-kind="ply-mesh" data-src-pattern="assets/mesh/temporal/z/{time}s.ply" data-normal="1">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="normalLegend"></div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+              <div class="time-slider-wrap" style="padding: 10px 14px 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 11px; font-weight: 800; color: var(--muted); font-family: var(--mono);">Reconstruction Step:</span>
+                  <span class="slider-val-label" style="font-size: 11px; font-weight: 900; color: var(--text); font-family: var(--mono);">30s</span>
+                </div>
+                <input type="range" class="mesh-time-slider" min="6" max="30" step="6" value="30" style="width: 100%; cursor: pointer;">
+              </div>
+            </div>
+          </div>
+
+          <figure class="disc-fig" style="margin-top: 28px;">
+            <div class="discGrid" style="margin-top: 0; padding: 14px; gap: 14px;">
+              <div style="display: flex; flex-direction: column; align-items: center;"> 
+                <img src="static/images/fscore_nksr_vs_gt_fscore_at_0_002000.png" alt="Method A" style="border: 1px solid rgba(0,0,0,0.06); border-radius: 8px;">
+                <span style="font-size: 13px; color: var(--muted); margin-top: 6px;"><b>(a)</b></span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <img src="static/images/fscore_nksr_vs_gt_fscore_at_0_005000.png" alt="Method B" style="border: 1px solid rgba(0,0,0,0.06); border-radius: 8px;">
+                <span style="font-size: 13px; color: var(--muted); margin-top: 6px;"><b>(b)</b></span>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: center;">
+                <img src="static/images/fscore_nksr_vs_gt_fscore_at_0_010000.png" alt="Method C" style="border: 1px solid rgba(0,0,0,0.06); border-radius: 8px;">
+                <span style="font-size: 13px; color: var(--muted); margin-top: 6px;"><b>(c)</b></span>
+              </div>
+            </div>
+            
+            <figcaption>
+              Temporal evolution of Mesh-Mesh F-scores for AURORA and non-active baselines under different distance tolerances: <b>(a)</b> \(2\,\mathrm{mm}\), 
+              <b>(b)</b> \(5\,\mathrm{mm}\), and <b>(c)</b> \(10\,\mathrm{mm}\), averaged over six objects.
+            </figcaption>
+          </figure>
+
+          <p class="foot">
+            <b>Tip.</b> Click the small <b>Normals ▸</b> legend to expand/collapse the colorbar (so it never blocks the mesh).
+          </p>
+        </div>
+
+        <!-- Exp3 -->
+        <div class="expBlock exp3" id="exp3" style="margin-top:18px;" >
+          <h2>Experiment III — Comparision with Single-View 3D Reconstruction Baselines</h2>
+          <p class="subtitle">
+            We further compare our method with recent single-view 3D reconstruction methods, 
+            <b>TRELLIS.2</b> and <b>SPAR3D</b>, as reference baselines.  For a well-defined 
+            comparison, we use the corresponding high-resolutionclean object image as input for each object. 
+            Because single-view methods do not preserve metric scale, we evaluate their meshes after post-hoc scale alignment to the ground truth;
+            their scores therefore reflect scale-normalized shape similarity rather than directly usable metric reconstructions.
+          </p>
+
+          <div class="tableWrap">
+            <div class="tableTitle">
+              <b>Table.</b> Mesh--Mesh reconstruction comparison with single-view 3D reconstruction baselines. 
+              <b>\(F@\tau\)</b> denotes the F-score under distance threshold \(\tau\), where higher is better.
+            </div>
+            <div style="overflow:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th rowspan="2">Obj.</th>
+                    <th colspan="3">TRELLIS.2</th>
+                    <th colspan="3">SPAR3D</th>
+                    <th colspan="3">Ours (AURORA)</th>
+                  </tr>
+                  <tr>
+                    <th>\(F@2\ \uparrow\)</th>
+                    <th>\(F@5\ \uparrow\)</th>
+                    <th>\(F@10\ \uparrow\)</th>
+                    <th>\(F@2\ \uparrow\)</th>
+                    <th>\(F@5\ \uparrow\)</th>
+                    <th>\(F@10\ \uparrow\)</th>
+                    <th>\(F@2\ \uparrow\)</th>
+                    <th>\(F@5\ \uparrow\)</th>
+                    <th>\(F@10\ \uparrow\)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Cube</td>
+                    <td><b>0.8922</b></td>
+                    <td>0.9324</td>
+                    <td>0.9579</td>
+                    <td>0.4510</td>
+                    <td>0.5515</td>
+                    <td>0.8968</td>
+                    <td>0.6481</td>
+                    <td><b>0.9557</b></td>
+                    <td><b>0.9957</b></td>
+                  </tr>
+                  <tr>
+                    <td>Corner Block</td>
+                    <td>0.5140</td>
+                    <td>0.6447</td>
+                    <td>0.7833</td>
+                    <td>0.4507</td>
+                    <td>0.5331</td>
+                    <td>0.8686</td>
+                    <td><b>0.5298</b></td>
+                    <td><b>0.8559</b></td>
+                    <td><b>0.9488</b></td>
+                  </tr>
+                  <tr>
+                    <td>L-shaped Block</td>
+                    <td><b>0.8124</b></td>
+                    <td><b>0.9251</b></td>
+                    <td>0.9632</td>
+                    <td>0.5209</td>
+                    <td>0.7244</td>
+                    <td><b>0.9987</b></td>
+                    <td>0.4674</td>
+                    <td>0.8367</td>
+                    <td>0.9450</td>
+                  </tr>
+                  <tr>
+                    <td>Pepper</td>
+                    <td>0.6612</td>
+                    <td><b>0.9504</b></td>
+                    <td>0.9978</td>
+                    <td><b>0.6998</b></td>
+                    <td>0.9459</td>
+                    <td><b>1.0000</b></td>
+                    <td>0.5480</td>
+                    <td>0.8890</td>
+                    <td>0.9913</td>
+                  </tr>
+                  <tr>
+                    <td>Cylinder</td>
+                    <td>0.5884</td>
+                    <td>0.8861</td>
+                    <td>0.9423</td>
+                    <td><b>0.9030</b></td>
+                    <td><b>0.9963</b></td>
+                    <td><b>1.0000</b></td>
+                    <td>0.4035</td>
+                    <td>0.8320</td>
+                    <td>0.9372</td>
+                  </tr>
+                  <tr>
+                    <td>Cross Block</td>
+                    <td>0.4548</td>
+                    <td>0.6509</td>
+                    <td>0.7660</td>
+                    <td>0.3176</td>
+                    <td>0.6809</td>
+                    <td>0.9260</td>
+                    <td><b>0.4601</b></td>
+                    <td><b>0.8050</b></td>
+                    <td><b>0.9850</b></td>
+                  </tr>
+                  <tr style="border-top: 1.5px solid var(--border);">
+                    <td><b>Mean</b></td>
+                    <td><b>0.6538</b></td>
+                    <td>0.8316</td>
+                    <td>0.9018</td>
+                    <td>0.5572</td>
+                    <td>0.7387</td>
+                    <td>0.9484</td>
+                    <td>0.5095</td>
+                    <td><b>0.8624</b></td>
+                    <td><b>0.9672</b></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="qual-grid-4col" id="qualGrid3">
+            <div class="colhead">Input Picture</div>
+            <div class="colhead">TRELLIS.2</div>
+            <div class="colhead">SPAR3D</div>
+            <div class="colhead">Ours</div>
+            <!-- rows injected by JS -->
+          </div>
+          <p class="foot">
+            <b>Summary.</b> Our method achieves higher mean Mesh--Mesh F-scores than TRELLIS.2 and SPAR3D 
+            at the \(5\,\mathrm{mm}\) and \(10\,\mathrm{mm}\) thresholds across all evaluated objects. 
+            This suggests that actively acquiring additional observations improves metric reconstruction 
+            over single-view priors, especially for objects with distinct geometric features. Nevertheless, 
+            single-view methods produce relatively clean meshes, highlighting a direction for us to make future improvements.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         Discussion
+         ========================= -->
+    <section class="section" id="discussion">
+      <div class="container is-max-desktop">
+        <div class="discBlock">
+          <h2>Discussion — Reference Comparison with Neural Feels</h2>
+
+          <p class="subtitle">
+            We compare AURORA with Neural Feels under a matched <b>30 s</b> interaction budget on <i>Pepper</i>.
+            In this setting, AURORA achieves higher <b>F@5mm</b> and reconstructs more complete geometry,
+            benefiting from uncertainty-guided active replanning and multi-axis in-hand reorientation.
+          </p>
+
+          <figure class="disc-fig">
+            <img src="static/images/vs_neuralfeels.png"
+                alt="F@5mm comparison: AURORA vs Neural Feels"
+                loading="lazy">
+            <figcaption>
+              <b>F@5mm</b> over time on <i>Pepper</i> under a 30 s interaction budget.
+              AURORA reaches <b>0.89</b>, compared with <b>0.76</b> reported by Neural Feels.
+            </figcaption>
+          </figure>
+
+          <p class="foot">
+            <b>Efficiency.</b> Neural Feels reports <b>417.13 s</b> wall-clock reconstruction time from a 30 s observation window,
+            while AURORA completes reconstruction in <b>71.82 s</b> including mesh extraction, achieving about <b>5.8×</b> lower latency.
+            This efficiency mainly comes from our lightweight point-cloud fusion and planning pipeline, instead of optimizing a dense neural SDF.
+          </p>
+
+          <p class="foot">
+            <b>Note.</b> This is a reference comparison rather than a strictly controlled benchmark, since the two systems differ in hardware,
+            tactile sensing, manipulation policy, task focus, and object instances. Therefore, the result should be interpreted as showing
+            higher reconstruction efficiency in our current setting, rather than claiming that AURORA is universally superior to Neural Feels.
+          </p>
+        </div>
+      </div>
+    </section>
+
+          <!-- <div class="discGrid"> -->
+            <!-- RGB -->
+            <!-- <div class="card">
+              <div class="discHead">
+                <div class="title">Pepper (RGB)</div>
+              </div>
+              <div class="discMedia">
+                <img src="assets/ablation/rgb.png" alt="pepper rgb" loading="lazy" style="width:100%; height:100%; object-fit:contain;">
+              </div>
+            </div> -->
+
+            <!-- Ours mesh (PLY) -->
+            <!-- <div class="card">
+              <div class="discHead">
+                <div class="title">Ours</div>
+              </div>
+              <div class="discMedia">
+                <div class="viewer" data-kind="ply-mesh" data-src="assets/ablation/ours.ply" data-normal="1">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="normalLegend"></div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+            </div> -->
+
+            <!-- Neural Feels mesh (OBJ) -->
+            <!-- <div class="card">
+              <div class="discHead">
+                <div class="title">NeuralFeels</div>
+              </div>
+              <div class="discMedia">
+                <div class="viewer" data-kind="obj-mesh" data-src="assets/ablation/neuralfeels.obj">
+                  <div class="overlay">Scroll to load 3D…</div>
+                  <div class="controlsBar"><button class="btn">Reset view</button></div>
+                  <div class="hint">Drag · Scroll</div>
+                </div>
+              </div>
+            </div>
+          </div> -->
+
+          <!-- <p class="foot">
+            <b>Efficiency.</b> Neural Feels reports <b>417.13 s</b> wall-clock time for reconstruction from a 30 s window,
+            while ours completes the same stage in <b>61.82 s</b> (~6.7× faster), enabling substantially lower end-to-end latency.
+            It is worth mentioning that this comparison is subject to differences in hardware, tactile sensing, manipulation policies, 
+            task focus, and object instances
+          </p>
+        </div>
+      </div>
+    </section> -->
+
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content">
+            <p>
+              This page was built using the
+              <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>
+              adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Three.js importmap -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- ONE unified module script -->
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { PLYLoader } from "three/addons/loaders/PLYLoader.js";
+    import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+
+    // ---------------------------
+    // Exp1 assets
+    // ---------------------------
+    const EXP1_ITEMS = [
+      { key:"cube",     name:"Cube",           rgb:"assets/qual/cube_rgb.png",     pcd:"assets/pcd/cube_online.ply",     mesh:"assets/mesh/cube_offline.ply" },
+      { key:"corner",   name:"Corner Block",   rgb:"assets/qual/corner_rgb.png",   pcd:"assets/pcd/corner_online.ply",   mesh:"assets/mesh/corner_offline.ply" },
+      { key:"lblock",   name:"L-shaped Block", rgb:"assets/qual/lblock_rgb.png",   pcd:"assets/pcd/lblock_online.ply",   mesh:"assets/mesh/lblock_offline.ply" },
+      { key:"pepper",   name:"Pepper",         rgb:"assets/qual/pepper_rgb.png",   pcd:"assets/pcd/pepper_online.ply",   mesh:"assets/mesh/pepper_offline.ply" },
+      { key:"cylinder", name:"Cylinder",       rgb:"assets/qual/cylinder_rgb.png", pcd:"assets/pcd/cylinder_online.ply", mesh:"assets/mesh/cylinder_offline.ply" },
+      { key:"cross",    name:"Cross Block",    rgb:"assets/qual/cross_rgb.png",    pcd:"assets/pcd/cross_online.ply",    mesh:"assets/mesh/cross_offline.ply" },
+    ];
+
+    // ---------------------------
+    // Exp3 assets
+    // ---------------------------
+    const EXP3_ITEMS = [
+      { key:"cube",     name:"Cube",           rgb:"assets/qual/cube_rgb.png",     trellis:"assets/ablation/TRELLIS.2/cube.ply",     spar3d:"assets/ablation/Spar3D/mesh_cube.ply",  ours:"assets/mesh/cube_offline.ply" },
+      { key:"corner",   name:"Corner Block",   rgb:"assets/qual/corner_rgb.png",   trellis:"assets/ablation/TRELLIS.2/corner.ply",   spar3d:"assets/ablation/Spar3D/mesh_cube2.ply",  ours:"assets/mesh/corner_offline.ply" },
+      { key:"lblock",   name:"L-shaped Block", rgb:"assets/qual/lblock_rgb.png",   trellis:"assets/ablation/TRELLIS.2/lblock.ply",   spar3d:"assets/ablation/Spar3D/mesh_L.ply",  ours:"assets/mesh/lblock_offline.ply" },
+      { key:"pepper",   name:"Pepper",         rgb:"assets/qual/pepper_rgb.png",   trellis:"assets/ablation/TRELLIS.2/pepper.ply",   spar3d:"assets/ablation/Spar3D/mesh_pepper.ply",  ours:"assets/mesh/pepper_offline.ply" },
+      { key:"cylinder", name:"Cylinder",       rgb:"assets/qual/cylinder_rgb.png", trellis:"assets/ablation/TRELLIS.2/cylinder.ply", spar3d:"assets/ablation/Spar3D/mesh_cylinder.ply",  ours:"assets/mesh/cylinder_offline.ply" },
+      { key:"cross",    name:"Cross Block",    rgb:"assets/qual/cross_rgb.png",    trellis:"assets/ablation/TRELLIS.2/cross.ply",    spar3d:"assets/ablation/Spar3D/mesh_cross.ply",  ours:"assets/mesh/cross_offline.ply" },
+    ];
+
+    // ---------------------------
+    // Collapsible normal legend
+    // ---------------------------
+    function initNormalLegend(el){
+      if (!el) return;
+      el.innerHTML = `
+        <div class="nl-head">
+          <div>Normals</div><span>▸</span>
+        </div>
+        <div class="nl-body">
+          <div style="opacity:.85; margin-top:2px;">R=nx, G=ny, B=nz</div>
+          <div class="nl-row">
+            <div class="nl-lbl" style="color:#b00000;">R</div>
+            <div class="nl-bar" style="background: linear-gradient(90deg, rgb(0,0,0), rgb(255,0,0));"></div>
+          </div>
+          <div class="nl-row">
+            <div class="nl-lbl" style="color:#007000;">G</div>
+            <div class="nl-bar" style="background: linear-gradient(90deg, rgb(0,0,0), rgb(0,255,0));"></div>
+          </div>
+          <div class="nl-row">
+            <div class="nl-lbl" style="color:#0030b0;">B</div>
+            <div class="nl-bar" style="background: linear-gradient(90deg, rgb(0,0,0), rgb(0,0,255));"></div>
+          </div>
+          <div class="nl-minmax"><span>-1</span><span>+1</span></div>
+        </div>
+      `;
+      el.classList.remove("open");
+      const head = el.querySelector(".nl-head");
+      head.addEventListener("click", () => {
+        el.classList.toggle("open");
+        const caret = head.querySelector("span");
+        caret.textContent = el.classList.contains("open") ? "▾" : "▸";
+      });
+    }
+
+    // ---------------------------
+    // Exp1 grid builder (inject viewers with dataset)
+    // ---------------------------
+    const qualGrid = document.getElementById("qualGrid");
+
+    function mkCard({ title, tag, bodyEl }) {
+      const card = document.createElement("div");
+      card.className = "card";
+      const header = document.createElement("div");
+      header.className = "cardHeader";
+
+      const t = document.createElement("div");
+      t.className = "objname";
+      t.textContent = title;
+
+      const g = document.createElement("div");
+      g.className = "tag";
+      g.textContent = tag;
+
+      header.appendChild(t);
+      header.appendChild(g);
+      card.appendChild(header);
+      card.appendChild(bodyEl);
+      return card;
+    }
+
+    function mkImageMedia(src) {
+      const media = document.createElement("div");
+      media.className = "media";
+      const img = document.createElement("img");
+      img.src = src;
+      img.loading = "lazy";
+      img.alt = "object image";
+      media.appendChild(img);
+      return media;
+    }
+
+    function mkViewerMedia({ withLegend=false } = {}) {
+      const media = document.createElement("div");
+      media.className = "media";
+
+      const viewer = document.createElement("div");
+      viewer.className = "viewer";
+      media.appendChild(viewer);
+
+      const overlay = document.createElement("div");
+      overlay.className = "overlay";
+      overlay.textContent = "Scroll to load 3D…";
+      viewer.appendChild(overlay);
+
+      const controlsBar = document.createElement("div");
+      controlsBar.className = "controlsBar";
+      const btnReset = document.createElement("button");
+      btnReset.className = "btn";
+      btnReset.textContent = "Reset view";
+      controlsBar.appendChild(btnReset);
+      viewer.appendChild(controlsBar);
+
+      const hint = document.createElement("div");
+      hint.className = "hint";
+      hint.textContent = "Drag · Scroll";
+      viewer.appendChild(hint);
+
+      if (withLegend) {
+        const legend = document.createElement("div");
+        legend.className = "normalLegend";
+        viewer.appendChild(legend);
+        initNormalLegend(legend);
+      }
+
+      return { media, viewer };
+    }
+
+    function addRow(item){
+      const rgbCard = mkCard({ title: item.name, tag: "RGB", bodyEl: mkImageMedia(item.rgb) });
+
+      const pcdV = mkViewerMedia({ withLegend:false });
+      const pcdCard = mkCard({ title: item.name, tag: "Online PCD", bodyEl: pcdV.media });
+
+      const meshV = mkViewerMedia({ withLegend:true });
+      const meshCard = mkCard({ title: item.name, tag: "Offline Mesh", bodyEl: meshV.media });
+
+      qualGrid.appendChild(rgbCard);
+      qualGrid.appendChild(pcdCard);
+      qualGrid.appendChild(meshCard);
+
+      pcdV.viewer.dataset.kind = "ply-points";
+      pcdV.viewer.dataset.src  = item.pcd;
+
+      meshV.viewer.dataset.kind = "ply-mesh";
+      meshV.viewer.dataset.src  = item.mesh;
+      meshV.viewer.dataset.normal = "1";
+    }
+
+    if (qualGrid) EXP1_ITEMS.forEach(addRow);
+
+
+    const qualGrid3 = document.getElementById("qualGrid3");
+
+    function addRowToGrid3(item) {
+
+      const rgbCard = mkCard({ title: item.name, tag: "RGB", bodyEl: mkImageMedia(item.rgb) });
+
+      const trellisV = mkViewerMedia({ withLegend: true });
+      const trellisCard = mkCard({ title: item.name, tag: "TRELLIS.2", bodyEl: trellisV.media });
+      trellisV.viewer.dataset.kind = "ply-mesh";
+      trellisV.viewer.dataset.src  = item.trellis;
+      trellisV.viewer.dataset.normal = "1"; // 启用明亮法向图着色
+
+      const spar3dV = mkViewerMedia({ withLegend: true });
+      const spar3dCard = mkCard({ title: item.name, tag: "SPAR3D", bodyEl: spar3dV.media });
+      spar3dV.viewer.dataset.kind = "ply-mesh";
+      spar3dV.viewer.dataset.src  = item.spar3d;
+      spar3dV.viewer.dataset.normal = "1";
+
+      const oursV = mkViewerMedia({ withLegend: true });
+      const oursCard = mkCard({ title: item.name, tag: "Ours", bodyEl: oursV.media });
+      oursV.viewer.dataset.kind = "ply-mesh";
+      oursV.viewer.dataset.src  = item.ours;
+      oursV.viewer.dataset.normal = "1";
+
+      qualGrid3.appendChild(rgbCard);
+      qualGrid3.appendChild(trellisCard);
+      qualGrid3.appendChild(spar3dCard);
+      qualGrid3.appendChild(oursCard);
+    }
+    if (qualGrid3) EXP3_ITEMS.forEach(addRowToGrid3);
+
+    // Init legends already in DOM (exp2/discussion)
+    document.querySelectorAll(".normalLegend").forEach(initNormalLegend);
+
+    // ---------------------------
+    // Lazy mount/unmount (single global)
+    // ---------------------------
+    const active = new Map();      // el -> viewerObj
+    const renderList = [];         // viewerObjs
+
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const el = e.target;
+        if (e.isIntersecting) mount(el);
+        else unmount(el);
+      }
+    }, { threshold: 0.15, rootMargin: "300px" });
+
+    document.querySelectorAll(".viewer[data-kind]").forEach(v => io.observe(v));
+
+    function mount(el){
+      if (active.has(el)) return;
+
+      const kind = el.dataset.kind;
+      let src  = el.dataset.src;
+
+      // If this is a temporal viewer, dynamically resolve src based on current slider value
+      const pattern = el.dataset.srcPattern;
+      if (pattern) {
+        const card = el.closest(".card");
+        const slider = card ? card.querySelector(".mesh-time-slider") : null;
+        const t = slider ? slider.value : "30";
+        src = pattern.replace("{time}", t);
+      }
+
+      if (!src && !pattern) return;
+
+      const overlayEl = el.querySelector(".overlay");
+      const resetBtn  = el.querySelector(".btn");
+      const wantNormal = el.dataset.normal === "1";
+
+      let viewerObj = null;
+      if (kind === "ply-points") viewerObj = createPLYViewer({ container: el, src, mode: "points", normalColormap: false, overlayEl, resetBtn });
+      if (kind === "ply-mesh")   viewerObj = createPLYViewer({ container: el, src, mode: "mesh",   normalColormap: wantNormal, overlayEl, resetBtn });
+      if (kind === "obj-mesh")   viewerObj = createOBJViewer({ container: el, src, overlayEl, resetBtn });
+
+      if (!viewerObj) return;
+
+      active.set(el, viewerObj);
+      renderList.push(viewerObj);
+    }
+
+    function unmount(el){
+      const viewerObj = active.get(el);
+      if (!viewerObj) return;
+
+      viewerObj.dispose?.();
+      const canvas = el.querySelector("canvas");
+      if (canvas) canvas.remove();
+
+      active.delete(el);
+      const idx = renderList.indexOf(viewerObj);
+      if (idx >= 0) renderList.splice(idx, 1);
+
+      const overlayEl = el.querySelector(".overlay");
+      if (overlayEl) {
+        overlayEl.style.display = "flex";
+        overlayEl.textContent = "Scroll to load 3D…";
+      }
+    }
+
+    // ---------------------------
+    // Shared camera utilities
+    // ---------------------------
+    function fitCameraToObject(camera, controls, object, offset=1.25){
+      const box = new THREE.Box3().setFromObject(object);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const maxSize = Math.max(size.x, size.y, size.z);
+
+      const dist = (maxSize / (2 * Math.tan((Math.PI * camera.fov) / 360))) * offset;
+      const v = new THREE.Vector3(1, 0.8, 1).normalize();
+      camera.position.copy(center.clone().add(v.multiplyScalar(dist)));
+      camera.near = Math.max(dist / 200, 1e-6);
+      camera.far  = dist * 200;
+      camera.updateProjectionMatrix();
+
+      controls.target.copy(center);
+      controls.update();
+      return { pos: camera.position.clone(), tgt: controls.target.clone(), zoom: camera.zoom };
+    }
+
+    function normalizeObjectScale(obj, target=1.0){
+      const box = new THREE.Box3().setFromObject(obj);
+      const size = box.getSize(new THREE.Vector3());
+      const maxSize = Math.max(size.x, size.y, size.z);
+      if (!isFinite(maxSize) || maxSize <= 0) return;
+      const s = target / maxSize;
+      obj.scale.setScalar(s);
+    }
+
+    // ---------------------------
+    // PLY viewer (robust fetch+parse + incremental update)
+    // ---------------------------
+    function createPLYViewer({ container, src, mode, normalColormap, overlayEl, resetBtn }) {
+      const renderer = new THREE.WebGLRenderer({ antialias:false, alpha:false, powerPreference:"low-power" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setClearColor(0xffffff, 1);
+      container.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.001, 1e6);
+      camera.position.set(0.45, 0.35, 0.45);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+      const dir = new THREE.DirectionalLight(0xffffff, 0.85);
+      dir.position.set(1.2, 1.0, 1.1);
+      scene.add(dir);
+
+      let obj3d = null;
+      let initCam = null;
+
+      const ro = new ResizeObserver(resize);
+      ro.observe(container);
+
+      function resize(){
+        const w = container.clientWidth || 1;
+        const h = container.clientHeight || 1;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          if(!initCam) return;
+          camera.position.copy(initCam.pos);
+          controls.target.copy(initCam.tgt);
+          camera.zoom = initCam.zoom;
+          camera.updateProjectionMatrix();
+          controls.update();
+        });
+      }
+
+      renderer.domElement.addEventListener("webglcontextlost", (ev) => {
+        ev.preventDefault();
+        if (overlayEl) {
+          overlayEl.style.display = "flex";
+          overlayEl.textContent = "WebGL context lost. Scroll away and back.";
+        }
+      }, false);
+
+      const loader = new PLYLoader();
+
+      async function loadPLY(targetSrc){
+        try{
+          if (overlayEl) { overlayEl.style.display = "flex"; overlayEl.textContent = "Loading 3D…"; }
+
+          const res = await fetch(targetSrc, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+          const buf = await res.arrayBuffer();
+
+          const headStr = new TextDecoder().decode(buf.slice(0, 200));
+          if (headStr.includes("git-lfs.github.com/spec")) {
+            throw new Error("Git-LFS pointer detected. Replace with real .ply file.");
+          }
+
+          const geometry = headStr.includes("format ascii")
+            ? loader.parse(new TextDecoder().decode(buf))
+            : loader.parse(buf);
+
+          if (mode === "mesh") geometry.computeVertexNormals();
+
+          // normal->color
+          if (mode === "mesh" && normalColormap) {
+            const nAttr = geometry.getAttribute("normal");
+            if (nAttr) {
+              const colors = new Float32Array(nAttr.count * 3);
+              for (let i=0; i<nAttr.count; i++){
+                const nx=nAttr.getX(i), ny=nAttr.getY(i), nz=nAttr.getZ(i);
+                colors[3*i+0]=0.5*(nx+1);
+                colors[3*i+1]=0.5*(ny+1);
+                colors[3*i+2]=0.5*(nz+1);
+              }
+              geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+            }
+          }
+
+          if (obj3d) {
+            scene.remove(obj3d);
+            disposeObject(obj3d);
+            obj3d = null;
+          }
+
+          if (mode === "points") {
+            geometry.computeBoundingBox();
+            const bb = geometry.boundingBox;
+            const sz = bb.getSize(new THREE.Vector3());
+            const maxSize = Math.max(sz.x, sz.y, sz.z);
+            const pointSize = THREE.MathUtils.clamp(maxSize * 0.01, 0.002, 1.5);
+
+            const hasColor = geometry.hasAttribute("color");
+            const mat = new THREE.PointsMaterial({
+              size: pointSize,
+              sizeAttenuation: true,
+              vertexColors: hasColor,
+              color: hasColor ? 0xffffff : 0x111111,
+              transparent: true,
+              opacity: 0.98
+            });
+            obj3d = new THREE.Points(geometry, mat);
+          } else {
+            let mat;
+            if (normalColormap) {
+              // 1. 如果是法向着色（Normal Colormap），使用无光照材质 MeshBasicMaterial
+              // 这样法向颜色会完全不收灯光和阴影影响，呈现极其明亮、真实的法向彩色
+              mat = new THREE.MeshBasicMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide // 双面渲染，避免开面或网格背面显示为黑色
+              });
+            } else {
+              mat = new THREE.MeshStandardMaterial({
+              metalness: 0.05,
+              roughness: 0.85,
+              vertexColors: true
+              });
+            }
+            obj3d = new THREE.Mesh(geometry, mat);
+          }
+
+          // center + normalize scale
+          geometry.computeBoundingBox();
+          const center = geometry.boundingBox.getCenter(new THREE.Vector3());
+          obj3d.position.sub(center);
+          normalizeObjectScale(obj3d, 1.0);
+
+          scene.add(obj3d);
+
+          // Only fit camera on initial load, preserve custom user angles on sequential updates
+          if (!initCam) {
+            initCam = fitCameraToObject(camera, controls, obj3d, 1.35);
+          }
+
+          if (overlayEl) overlayEl.style.display = "none";
+          resize();
+        } catch(e){
+          console.error("PLY load failed:", targetSrc, e);
+          if (overlayEl) {
+            overlayEl.style.display = "flex";
+            overlayEl.textContent = `PLY error: ${String(e).slice(0, 160)}`;
+          }
+        }
+      }
+
+      function disposeObject(o){
+        o.traverse?.((n) => {
+          if (n.geometry) n.geometry.dispose?.();
+          if (n.material) {
+            if (Array.isArray(n.material)) n.material.forEach(m => m.dispose?.());
+            else n.material.dispose?.();
+          }
+        });
+      }
+
+      loadPLY(src);
+      resize();
+
+      function render(){
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      function dispose(){
+        ro.disconnect();
+        if (obj3d) { scene.remove(obj3d); disposeObject(obj3d); obj3d=null; }
+        renderer.dispose();
+        renderer.forceContextLoss?.();
+      }
+
+      // Expose function to update source model without resetting orientation
+      function updateSrc(newSrc) {
+        loadPLY(newSrc);
+      }
+
+      return { render, dispose, updateSrc };
+    }
+
+    // ---------------------------
+    // OBJ viewer
+    // ---------------------------
+    function createOBJViewer({ container, src, overlayEl, resetBtn }) {
+      const renderer = new THREE.WebGLRenderer({ antialias:false, alpha:false, powerPreference:"low-power" });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setClearColor(0xffffff, 1);
+      container.appendChild(renderer.domElement);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+
+      const camera = new THREE.PerspectiveCamera(45, 1, 0.001, 1e6);
+      camera.position.set(0.45, 0.35, 0.45);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+      const dir = new THREE.DirectionalLight(0xffffff, 0.85);
+      dir.position.set(1.2, 1.0, 1.1);
+      scene.add(dir);
+
+      let rootObj = null;
+      let initCam = null;
+
+      const ro = new ResizeObserver(resize);
+      ro.observe(container);
+
+      function resize(){
+        const w = container.clientWidth || 1;
+        const h = container.clientHeight || 1;
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+
+      if (resetBtn) {
+        resetBtn.addEventListener("click", () => {
+          if(!initCam) return;
+          camera.position.copy(initCam.pos);
+          controls.target.copy(initCam.tgt);
+          camera.zoom = initCam.zoom;
+          camera.updateProjectionMatrix();
+          controls.update();
+        });
+      }
+
+      async function load(){
+        try{
+          if (overlayEl) { overlayEl.style.display = "flex"; overlayEl.textContent = "Loading 3D…"; }
+
+          const objLoader = new OBJLoader();
+          rootObj = await new Promise((resolve, reject) => {
+            objLoader.load(src, resolve, undefined, reject);
+          });
+
+          rootObj.traverse((n) => {
+            if (!n.isMesh) return;
+            n.material = new THREE.MeshStandardMaterial({
+              color: 0xdddddd,
+              metalness: 0.02,
+              roughness: 0.9
+            });
+            n.geometry.computeVertexNormals?.();
+          });
+
+          // center + normalize
+          const box = new THREE.Box3().setFromObject(rootObj);
+          const center = box.getCenter(new THREE.Vector3());
+          rootObj.position.sub(center);
+          normalizeObjectScale(rootObj, 1.0);
+
+          scene.add(rootObj);
+          initCam = fitCameraToObject(camera, controls, rootObj, 1.35);
+
+          if (overlayEl) overlayEl.style.display = "none";
+          resize();
+        } catch(e){
+          console.error("OBJ load failed:", src, e);
+          if (overlayEl){
+            overlayEl.style.display = "flex";
+            overlayEl.textContent = `OBJ error: ${String(e).slice(0,160)}`;
+          }
+        }
+      }
+
+      function disposeObject(o){
+        o.traverse?.((n) => {
+          if (n.geometry) n.geometry.dispose?.();
+          if (n.material) {
+            if (Array.isArray(n.material)) n.material.forEach(m => m.dispose?.());
+            else n.material.dispose?.();
+          }
+        });
+      }
+
+      function render(){
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      function dispose(){
+        ro.disconnect();
+        if (rootObj){ scene.remove(rootObj); disposeObject(rootObj); rootObj=null; }
+        renderer.dispose();
+        renderer.forceContextLoss?.();
+      }
+
+      load();
+      resize();
+      return { render, dispose };
+    }
+
+    // ---------------------------
+    // Hook slider changes
+    // ---------------------------
+    document.querySelectorAll(".mesh-time-slider").forEach(slider => {
+      slider.addEventListener("input", (e) => {
+        const val = e.target.value;
+        const card = slider.closest(".card");
+        if (!card) return;
+
+        // 1. Update text display label
+        const label = card.querySelector(".slider-val-label");
+        if (label) label.textContent = val + "s";
+
+        // 2. Fetch the WebGL viewer container
+        const viewerEl = card.querySelector(".viewer");
+        if (!viewerEl) return;
+
+        const pattern = viewerEl.dataset.srcPattern;
+        if (pattern) {
+          const newSrc = pattern.replace("{time}", val);
+          
+          // If viewer is currently loaded (in active viewport), trigger model update instantly
+          const viewerObj = active.get(viewerEl);
+          if (viewerObj && typeof viewerObj.updateSrc === "function") {
+            viewerObj.updateSrc(newSrc);
+          } else {
+            // Otherwise, update the target data-src so it loads the correct step when scrolled to view
+            viewerEl.dataset.src = newSrc;
+          }
+        }
+      });
+    });
+
+    // ---------------------------
+    // Render loop (single)
+    // ---------------------------
+    function animate(){
+      requestAnimationFrame(animate);
+      for (const v of renderList) v.render();
+    }
+    animate();
+  </script>
+</body>
+</html>

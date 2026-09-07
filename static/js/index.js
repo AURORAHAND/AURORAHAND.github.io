@@ -174,6 +174,23 @@ function updateAuroraCameraReadyPage() {
                     <span>Code</span>
                 </a>
             </span>
+            <span class="link-block">
+                <a href="https://youtu.be/Oirx3k4veTA"
+                   target="_blank" rel="noopener noreferrer"
+                   class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fab fa-youtube"></i></span>
+                    <span>YouTube</span>
+                </a>
+            </span>
+            <span class="link-block">
+                <span class="button is-normal is-rounded is-light"
+                      aria-disabled="true"
+                      title="Bilibili link coming soon"
+                      style="cursor:default; opacity:.78;">
+                    <span class="icon"><i class="fas fa-play-circle"></i></span>
+                    <span>Bilibili (Coming soon)</span>
+                </span>
+            </span>
         `;
     }
 

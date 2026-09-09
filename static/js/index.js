@@ -144,7 +144,7 @@ function updateAuroraCameraReadyPage() {
     if (publicationLinks) {
         publicationLinks.innerHTML = `
             <span class="link-block">
-                <a href="https://arxiv.org/search/?query=AURORA%3A+Active+Uncertainty-Driven+Re-Orientation+for+In-Hand+Reconstruction&searchtype=title&abstracts=show&order=-announced_date_first&size=50"
+                <a href="https://arxiv.org/abs/2609.08493"
                    target="_blank" rel="noopener noreferrer"
                    class="external-link button is-normal is-rounded is-dark">
                     <span class="icon"><i class="fas fa-file-pdf"></i></span>
